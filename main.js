@@ -112,7 +112,7 @@ Apify.main(async () => {
                         sizes.push($(op).text().trim());
                     }
                 });
-                const price = $('.price-value').text();
+                const price = $('.price-value').text().trim();
 
                 const pageResult = {
                     url: request.url,
