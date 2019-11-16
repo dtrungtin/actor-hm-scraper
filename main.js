@@ -76,7 +76,7 @@ Apify.main(async () => {
         maxRequestRetries: 1,
         handlePageTimeoutSecs: 60,
 
-        handlePageFunction: async ({ request, $ }) => {
+        handlePageFunction: async ({ request, body, $ }) => {
             await delay(1000);
             console.log(`Processing ${request.url}...`);
 
@@ -103,15 +103,23 @@ Apify.main(async () => {
                     }
                 }
             } else if (request.userData.label === 'item') {
+                // Extract javascript from body
+                const javascriptStr = body.match(/\bproductArticleDetails\b\s=\s\{.*?\};/s)[0].replace('productArticleDetails =', '').trim().slice(0, -1);
+                const json = safeEval(javascriptStr, { isDesktop: true });
                 const name = $('.product-item-headline').text();
                 const itemId = request.url.match(/(\d*).html/)[1];
-                const color = $('.product-colors h3').text();
-                const sizes = [];
-                $('.product-item-buttons .picker-list .picker-option span').each((i,op) => {
-                    if (i > 2) {
-                        sizes.push($(op).text().trim());
+                let color = '';
+                let variantId = '';
+                $('.product-colors .list-item a').each((i,a) => {
+                    if (i === 0) {
+                        const $a = $(a);
+                        color = $a.attr('title');
+                        variantId = $a.attr('data-articlecode');
                     }
                 });
+
+                const variantObj = json[`${variantId}`];
+                const sizes = variantObj.sizes.map(s => s.name);
                 const price = $('.price-value').text().trim();
 
                 const pageResult = {
