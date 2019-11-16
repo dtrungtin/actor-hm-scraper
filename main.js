@@ -71,8 +71,8 @@ Apify.main(async () => {
     const crawler = new Apify.CheerioCrawler({
         requestQueue,
 
-        minConcurrency: 10,
-        maxConcurrency: 50,
+        minConcurrency: 2,
+        maxConcurrency: 5,
         maxRequestRetries: 1,
         handlePageTimeoutSecs: 60,
 
@@ -106,7 +106,7 @@ Apify.main(async () => {
                 // Extract javascript from body
                 const javascriptStr = body.match(/\bproductArticleDetails\b\s=\s\{.*?\};/s)[0].replace('productArticleDetails =', '').trim().slice(0, -1);
                 const json = safeEval(javascriptStr, { isDesktop: true });
-                const name = $('.product-item-headline').text();
+                const name = $('.product-item-headline').text().trim();
                 const itemId = request.url.match(/(\d*).html/)[1];
                 let color = '';
                 let variantId = '';
@@ -119,7 +119,7 @@ Apify.main(async () => {
                 });
 
                 const variantObj = json[`${variantId}`];
-                const sizes = variantObj.sizes.map(s => s.name);
+                const sizes = variantObj.sizes.map(s => s.name).filter(s => s !== '');
                 const price = $('.price-value').text().trim();
 
                 const pageResult = {
